@@ -28,6 +28,7 @@ pub const UI = struct {
         const style = zgui.getStyle();
         styleSetColor(style, .text, 255, 255, 255, 255);
         styleSetColor(style, .window_bg, 23, 14, 26, 255);
+        style.window_rounding = 0.2;
     }
 
     fn styleSetColor(Style: *zgui.Style, Col: zgui.StyleCol, R: u32, G: u32, B: u32, A: u32) void {

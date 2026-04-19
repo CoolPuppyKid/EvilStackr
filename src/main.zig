@@ -7,6 +7,7 @@ const c = @import("c.zig").c;
 const UI = @import("UI/ui.zig").UI;
 const Assets = @import("assets.zig");
 const Window = @import("window.zig").Window;
+const Project = @import("UI/project.zig").Project;
 const nfd = @import("nfd");
 const allocator = std.heap.page_allocator;
 const gl = zopengl.bindings;
@@ -28,6 +29,8 @@ pub fn main() !void {
     var window = try Window.init(allocator);
     defer window.deinit();
 
+    var project = Project.init();
+
     try window.setIcon("EvilStackr.png");
 
     var ui = UI.init(allocator, window);
@@ -43,11 +46,12 @@ pub fn main() !void {
         gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ 0, 0, 0, 1.0 });
 
         ui.startRender();
+
         _ = zgui.begin("Viewport", .{});
         zgui.end();
 
-        _ = zgui.begin("Project", .{});
-        zgui.end();
+        try project.draw();
+
         ui.endRender();
 
         window.rawWindow.swapBuffers();

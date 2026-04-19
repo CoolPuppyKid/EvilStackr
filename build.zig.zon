@@ -23,8 +23,8 @@
             .hash = "NFD-0.0.0-erBH3-GJBgA2FF9iwLK3ZdQCqyjVxCgTMdAT_Ffsi5fY",
         },
         .ZigLibRaw = .{
-            .url = "git+https://github.com/CoolPuppyKid/ZigLibRaw.git#feea53ba5b5e2e83b9092e87cf7fd454b31ad216",
-            .hash = "ZigLibRaw-0.0.1-EcQhbEqILABdC3Tc9EsUYByaPHSmQH7tr6Beg17DFjUE",
+            .url = "git+https://github.com/CoolPuppyKid/ZigLibRaw.git#a85de72b5cce5769af9389646028c9e9e2c752e6",
+            .hash = "ZigLibRaw-0.0.1-EcQhbICILABugskIpMEvxYOgDhe2K3RmCh0dFAeHwD-D",
         },
     },
     .minimum_zig_version = "0.15.2",
