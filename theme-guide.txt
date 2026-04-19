@@ -1,0 +1,4 @@
+BG = #170e1a
+Outline = #3e2546
+Accent1 = #273242
+Accent2 = #2b5288

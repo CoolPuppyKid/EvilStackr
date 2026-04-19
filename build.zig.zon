@@ -1,0 +1,33 @@
+.{
+    .name = .EvilStackr,
+    .version = "0.0.1",
+    .dependencies = .{
+        .zopengl = .{
+            .url = "git+https://github.com/zig-gamedev/zopengl.git#5701e0f92735a6378d1d68420090f88bebd9e41c",
+            .hash = "zopengl-0.6.0-dev-5-tnz6-mCgD65lY7NrNAU4haXCpVHUpTUEznTwfmBB96",
+        },
+        .zglfw = .{
+            .url = "git+https://github.com/zig-gamedev/zglfw.git#15bf6ec59a4e1399d0c753455f69b28f09e41791",
+            .hash = "zglfw-0.10.0-dev-zgVDNHO2IQDy_fSdwY5U4z42rHUuKgt7T9f-qmQ3FnuL",
+        },
+        .ZigSTBI = .{
+            .url = "git+https://github.com/Evil-Engine/ZigSTBI.git#ff0af34c4afab5054d81a3cfbadafc15f0863856",
+            .hash = "ZigSTBI-0.0.1-XrkkIdNyDACsiDMuyps59BBtk6Ov4L7IHw7PwFVkQJ8b",
+        },
+        .zgui = .{
+            .url = "git+https://github.com/zig-gamedev/zgui.git#4293fd37503ad9c680193b42990bd6b5ec4876cf",
+            .hash = "zgui-0.6.0-dev--L6sZHr3bQCeckUeL9YPiARJirsOyjQUZlrg7JxbPzbp",
+        },
+        .NFD = .{
+            .url = "git+https://github.com/Evil-Engine/nfd-zig.git#802143be8c29fc35ffda80a13c1ad1b21eb56656",
+            .hash = "NFD-0.0.0-erBH3-GJBgA2FF9iwLK3ZdQCqyjVxCgTMdAT_Ffsi5fY",
+        },
+        .ZigLibRaw = .{
+            .url = "git+https://github.com/CoolPuppyKid/ZigLibRaw.git#feea53ba5b5e2e83b9092e87cf7fd454b31ad216",
+            .hash = "ZigLibRaw-0.0.1-EcQhbEqILABdC3Tc9EsUYByaPHSmQH7tr6Beg17DFjUE",
+        },
+    },
+    .minimum_zig_version = "0.15.2",
+    .paths = .{""},
+    .fingerprint = 0xec53f8f9af70faae,
+}
