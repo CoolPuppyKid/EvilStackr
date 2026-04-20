@@ -13,8 +13,6 @@ const allocator = std.heap.page_allocator;
 const gl = zopengl.bindings;
 
 pub fn main() !void {
-    const processor = c.libraw_init(0) orelse return error.FailedToInitLibRaw;
-    defer c.libraw_close(processor);
     std.debug.print("Initialized LibRaw: {s}\n", .{c.libraw_version()});
 
     try glfw.init();
@@ -29,7 +27,8 @@ pub fn main() !void {
     var window = try Window.init(allocator);
     defer window.deinit();
 
-    var project = Project.init();
+    var project = try Project.init(allocator);
+    defer project.deinit();
 
     try window.setIcon("EvilStackr.png");
 

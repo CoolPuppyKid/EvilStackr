@@ -19,12 +19,12 @@
             .hash = "zgui-0.6.0-dev--L6sZHr3bQCeckUeL9YPiARJirsOyjQUZlrg7JxbPzbp",
         },
         .NFD = .{
-            .url = "git+https://github.com/Evil-Engine/nfd-zig.git#802143be8c29fc35ffda80a13c1ad1b21eb56656",
-            .hash = "NFD-0.0.0-erBH3-GJBgA2FF9iwLK3ZdQCqyjVxCgTMdAT_Ffsi5fY",
+            .url = "git+https://github.com/Evil-Engine/nfd-zig.git#f4370022254fc38ef2ae46215aa0f64e27ec56c1",
+            .hash = "NFD-0.0.0-erBH3yqRBgAnK3rRbW2aYxgPOcNvFuV96rbcNqdZwa9Y",
         },
         .ZigLibRaw = .{
-            .url = "git+https://github.com/CoolPuppyKid/ZigLibRaw.git#a85de72b5cce5769af9389646028c9e9e2c752e6",
-            .hash = "ZigLibRaw-0.0.1-EcQhbICILABugskIpMEvxYOgDhe2K3RmCh0dFAeHwD-D",
+            .url = "git+https://github.com/CoolPuppyKid/ZigLibRaw.git#90587570196f3cd3095ee04f780ca0cb332e8411",
+            .hash = "ZigLibRaw-0.0.1-EcQhbO6JLACXmg8T-gUSitulr4Y9rAbGZ-Tz2C4BRz87",
         },
     },
     .minimum_zig_version = "0.15.2",
