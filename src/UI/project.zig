@@ -20,6 +20,10 @@ pub const Project = struct {
     }
 
     pub fn deinit(self: *Project) void {
+        std.debug.print("Freeing allocated data, This may take awhile for large projects.\n", .{});
+        for (self.loadedImages.items) |img| {
+            self.allocator.free(img.data);
+        }
         self.loadedImages.deinit(self.allocator);
     }
 
@@ -41,16 +45,26 @@ pub const Project = struct {
             };
             defer if (stbiImage != null) stbiImage.?.deinit();
 
-            var img = image.Image{ .filename = fileName, .itype = .LIGHT, .data = undefined };
+            var img = image.Image{ .filename = fileName, .itype = .LIGHT, .data = undefined, .width = 0, .height = 0, .channels = 0 };
 
             if (stbiImage) |si| {
-                img.data = si.bytes;
+                const owned = try self.allocator.dupe(u8, si.bytes);
+                img.data = owned;
+                img.width = si.width;
+                img.height = si.height;
+                img.channels = si.channel_number;
             } else {
                 const librawData = c.libraw_init(0) orelse {
                     std.debug.print("Failed to init LibRaw\n", .{});
                     return error.LibrawInitFailed;
                 };
                 defer c.libraw_close(librawData);
+
+                librawData.*.params.output_bps = 16;
+                librawData.*.params.use_camera_wb = 1;
+                librawData.*.params.no_auto_bright = 1;
+                librawData.*.params.gamm[0] = 1.0;
+                librawData.*.params.gamm[1] = 1.0;
 
                 if (c.libraw_open_file(librawData, imagePaths.items[i].ptr) != c.LIBRAW_SUCCESS) {
                     std.debug.print("Failed to open image with LibRaw, therefore this file is not supported by EvilStackr\n", .{});
@@ -61,7 +75,7 @@ pub const Project = struct {
                     std.debug.print("Failed to unpack RAW image\n", .{});
                     return error.LibrawProcessFailed;
                 }
-                std.debug.print("Processing image data\n", .{});
+                std.debug.print("LibRaw 1/3 | Processing image data\n", .{});
 
                 if (c.libraw_dcraw_process(librawData) != c.LIBRAW_SUCCESS) {
                     std.debug.print("Failed to process RAW image\n", .{});
@@ -75,12 +89,16 @@ pub const Project = struct {
                     return error.LibrawProcessFailed;
                 }
                 defer c.libraw_dcraw_clear_mem(processed);
-                std.debug.print("Copying image data\n", .{});
+                std.debug.print("LibRaw 2/3 | Copying image data\n", .{});
 
                 const byteLen = processed.*.data_size;
                 const dataPtr: [*]u8 = @ptrCast(&processed.*.data);
                 const owned = try self.allocator.dupe(u8, dataPtr[0..byteLen]);
                 img.data = owned;
+                img.width = processed.*.width;
+                img.height = processed.*.height;
+                img.channels = processed.*.colors;
+                std.debug.print("LibRaw 3/3 | Done\n", .{});
             }
 
             try self.loadedImages.append(self.allocator, img);
@@ -110,7 +128,7 @@ pub const Project = struct {
                 zgui.tableNextRow(.{});
                 _ = zgui.tableSetColumnIndex(0);
 
-                zgui.textUnformatted(self.loadedImages.items[i].filename);
+                zgui.text("{s} | {d}x{d}", .{ self.loadedImages.items[i].filename, self.loadedImages.items[i].width, self.loadedImages.items[i].height });
                 _ = zgui.tableSetColumnIndex(1);
                 zgui.textUnformatted(@tagName(self.loadedImages.items[i].itype));
             }
