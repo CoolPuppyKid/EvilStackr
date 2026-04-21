@@ -28,6 +28,10 @@ pub const UI = struct {
         const style = zgui.getStyle();
         styleSetColor(style, .text, 255, 255, 255, 255);
         styleSetColor(style, .window_bg, 23, 14, 26, 255);
+        styleSetColor(style, .title_bg_active, 43, 82, 136, 255);
+        styleSetColor(style, .title_bg_collapsed, 39, 50, 66, 255);
+        styleSetColor(style, .title_bg, 39, 50, 66, 255);
+        _ = zgui.io.addFontFromFile("assets/Fonts/M_PLUS_Rounded_1c/MPLUSRounded1c-ExtraBold.ttf", 18);
         style.window_rounding = 0.2;
     }
 
