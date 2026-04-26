@@ -13,10 +13,24 @@ const AddImageError = error{
     LibrawProcessFailed,
 };
 
+const LoadResult = struct {
+    img: image.Image,
+    owned_path: []const u8,
+};
+
 pub const Project = struct {
     pub fn init(allocator: std.mem.Allocator) !Project {
         const loadedImages = try std.ArrayList(image.Image).initCapacity(allocator, 1);
-        return Project{ .allocator = allocator, .loadedImages = loadedImages };
+        return Project{
+            .allocator = allocator,
+            .loadedImages = loadedImages,
+            .loading_total = std.atomic.Value(u32).init(0),
+            .loading_completed = std.atomic.Value(u32).init(0),
+            .is_loading = std.atomic.Value(bool).init(false),
+            .result_mutex = .{},
+            .pending_results = std.ArrayList(LoadResult).initCapacity(allocator, 1) catch unreachable,
+            .owned_paths = std.ArrayList([]const u8).initCapacity(allocator, 1) catch unreachable,
+        };
     }
 
     pub fn deinit(self: *Project) void {
@@ -25,38 +39,60 @@ pub const Project = struct {
             self.allocator.free(img.data);
         }
         self.loadedImages.deinit(self.allocator);
+        for (self.owned_paths.items) |p| self.allocator.free(p);
+        self.owned_paths.deinit(self.allocator);
+        self.pending_results.deinit(self.allocator);
     }
 
-    fn addImage(self: *Project) AddImageError!void {
-        var imagePaths = try nfd.openFilesDialog("*", null);
+    fn startAddImages(self: *Project) void {
+        var imagePaths = nfd.openFilesDialog("*", null) catch return;
         defer nfd.freePaths(&imagePaths);
-        var i: usize = 0;
-        while (i < imagePaths.items.len) : (i += 1) {
-            if (!std.unicode.wtf8ValidateSlice(imagePaths.items[i])) {
-                std.debug.print("Skipping invalid path at index {d}\n", .{i});
-                continue;
-            }
-            const fileName = std.fs.path.basename(imagePaths.items[i]);
+
+        if (imagePaths.items.len == 0) return;
+
+        for (self.owned_paths.items) |p| self.allocator.free(p);
+        self.owned_paths.clearRetainingCapacity();
+        for (imagePaths.items) |p| {
+            self.owned_paths.append(self.allocator, p) catch continue;
+        }
+
+        self.loading_total.store(@intCast(self.owned_paths.items.len), .release);
+        self.loading_completed.store(0, .release);
+        self.is_loading.store(true, .release);
+
+        const thread = std.Thread.spawn(.{}, loadImagesThread, .{self}) catch return;
+        thread.detach();
+    }
+
+    fn loadImagesThread(self: *Project) void {
+        for (self.owned_paths.items) |path| {
+            const fileName = std.fs.path.basename(path);
             std.debug.print("Attempting to load: {s}\n", .{fileName});
 
-            var stbiImage: ?zigstbi.Image = zigstbi.load_file(imagePaths.items[i], 0) catch |err| blk: {
-                std.debug.print("STBI failed to load image: {s}, This is normal if the image is a raw image.\n", .{@errorName(err)});
+            var img = image.Image{ .filename = fileName, .itype = .LIGHT, .data = undefined, .width = 0, .height = 0, .channels = 0 };
+            var loaded = false;
+
+            var stbiImage: ?zigstbi.Image = zigstbi.load_file(path, 0) catch |err| blk: {
+                std.debug.print("STBI failed: {s}, trying LibRaw\n", .{@errorName(err)});
                 break :blk null;
             };
-            defer if (stbiImage != null) stbiImage.?.deinit();
 
-            var img = image.Image{ .filename = fileName, .itype = .LIGHT, .data = undefined, .width = 0, .height = 0, .channels = 0 };
-
-            if (stbiImage) |si| {
-                const owned = try self.allocator.dupe(u8, si.bytes);
+            if (stbiImage != null) {
+                const owned = self.allocator.dupe(u8, stbiImage.?.bytes) catch {
+                    stbiImage.?.deinit();
+                    _ = self.loading_completed.fetchAdd(1, .release);
+                    continue;
+                };
                 img.data = owned;
-                img.width = si.width;
-                img.height = si.height;
-                img.channels = si.channel_number;
+                img.width = stbiImage.?.width;
+                img.height = stbiImage.?.height;
+                img.channels = stbiImage.?.channel_number;
+                stbiImage.?.deinit();
+                loaded = true;
             } else {
                 const librawData = c.libraw_init(0) orelse {
-                    std.debug.print("Failed to init LibRaw\n", .{});
-                    return error.LibrawInitFailed;
+                    _ = self.loading_completed.fetchAdd(1, .release);
+                    continue;
                 };
                 defer c.libraw_close(librawData);
 
@@ -66,54 +102,72 @@ pub const Project = struct {
                 librawData.*.params.gamm[0] = 1.0;
                 librawData.*.params.gamm[1] = 1.0;
 
-                if (c.libraw_open_file(librawData, imagePaths.items[i].ptr) != c.LIBRAW_SUCCESS) {
-                    std.debug.print("Failed to open image with LibRaw, therefore this file is not supported by EvilStackr\n", .{});
-                    return error.LibrawOpenFailed;
+                if (c.libraw_open_file(librawData, path.ptr) != c.LIBRAW_SUCCESS) {
+                    std.debug.print("LibRaw failed to open: {s}\n", .{fileName});
+                    _ = self.loading_completed.fetchAdd(1, .release);
+                    continue;
                 }
-
                 if (c.libraw_unpack(librawData) != c.LIBRAW_SUCCESS) {
-                    std.debug.print("Failed to unpack RAW image\n", .{});
-                    return error.LibrawProcessFailed;
+                    _ = self.loading_completed.fetchAdd(1, .release);
+                    continue;
                 }
-                std.debug.print("LibRaw 1/3 | Processing image data\n", .{});
-
                 if (c.libraw_dcraw_process(librawData) != c.LIBRAW_SUCCESS) {
-                    std.debug.print("Failed to process RAW image\n", .{});
-                    return error.LibrawProcessFailed;
+                    _ = self.loading_completed.fetchAdd(1, .release);
+                    continue;
                 }
 
                 var errcode: c_int = 0;
                 const processed = c.libraw_dcraw_make_mem_image(librawData, &errcode);
                 if (errcode != c.LIBRAW_SUCCESS or processed == null) {
-                    std.debug.print("Failed to extract image data\n", .{});
-                    return error.LibrawProcessFailed;
+                    _ = self.loading_completed.fetchAdd(1, .release);
+                    continue;
                 }
                 defer c.libraw_dcraw_clear_mem(processed);
-                std.debug.print("LibRaw 2/3 | Copying image data\n", .{});
 
                 const byteLen = processed.*.data_size;
                 const dataPtr: [*]u8 = @ptrCast(&processed.*.data);
-                const owned = try self.allocator.dupe(u8, dataPtr[0..byteLen]);
+                const owned = self.allocator.dupe(u8, dataPtr[0..byteLen]) catch {
+                    _ = self.loading_completed.fetchAdd(1, .release);
+                    continue;
+                };
                 img.data = owned;
                 img.width = processed.*.width;
                 img.height = processed.*.height;
                 img.channels = processed.*.colors;
-                std.debug.print("LibRaw 3/3 | Done\n", .{});
+                loaded = true;
             }
 
-            try self.loadedImages.append(self.allocator, img);
+            if (loaded) {
+                self.result_mutex.lock();
+                self.pending_results.append(self.allocator, .{ .img = img, .owned_path = path }) catch {};
+                self.result_mutex.unlock();
+            }
+            _ = self.loading_completed.fetchAdd(1, .release);
         }
+        self.is_loading.store(false, .release);
+    }
+
+    fn drainResults(self: *Project) void {
+        self.result_mutex.lock();
+        defer self.result_mutex.unlock();
+        for (self.pending_results.items) |result| {
+            self.loadedImages.append(self.allocator, result.img) catch continue;
+        }
+        self.pending_results.clearRetainingCapacity();
     }
 
     pub fn draw(self: *Project) !void {
+        self.drainResults();
+
+        const loading = self.is_loading.load(.acquire);
+
         if (zgui.begin("Project", .{})) {
-            if (zgui.button("Add Image(s)", .{})) {
-                addImage(self) catch |err| {
-                    switch (err) {
-                        error.LibrawOpenFailed => {},
-                        else => {},
-                    }
-                };
+            if (!loading) {
+                if (zgui.button("Add Image(s)", .{})) {
+                    self.startAddImages();
+                }
+            } else {
+                zgui.textDisabled("Loading...", .{});
             }
         }
         zgui.sameLine(.{});
@@ -136,8 +190,26 @@ pub const Project = struct {
         }
 
         zgui.end();
+
+        if (loading) {
+            const completed = self.loading_completed.load(.acquire);
+            const total = self.loading_total.load(.acquire);
+            zgui.openPopup("Loading Images", .{});
+            if (zgui.beginPopupModal("Loading Images", .{ .flags = .{ .no_resize = true, .always_auto_resize = true } })) {
+                zgui.text("Loading {d} / {d} images...", .{ completed, total });
+                const fraction = if (total > 0) @as(f32, @floatFromInt(completed)) / @as(f32, @floatFromInt(total)) else 0.0;
+                zgui.progressBar(.{ .fraction = fraction, .overlay = "", .w = 300 });
+                zgui.endPopup();
+            }
+        }
     }
 
     allocator: std.mem.Allocator,
     loadedImages: std.ArrayList(image.Image),
+    loading_total: std.atomic.Value(u32),
+    loading_completed: std.atomic.Value(u32),
+    is_loading: std.atomic.Value(bool),
+    result_mutex: std.Thread.Mutex,
+    pending_results: std.ArrayList(LoadResult),
+    owned_paths: std.ArrayList([]const u8),
 };

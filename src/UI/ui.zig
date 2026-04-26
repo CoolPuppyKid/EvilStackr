@@ -32,7 +32,11 @@ pub const UI = struct {
         styleSetColor(style, .title_bg_collapsed, 39, 50, 66, 255);
         styleSetColor(style, .title_bg, 39, 50, 66, 255);
         _ = zgui.io.addFontFromFile("assets/Fonts/M_PLUS_Rounded_1c/MPLUSRounded1c-ExtraBold.ttf", 18);
-        style.window_rounding = 0.2;
+        style.window_rounding = 8;
+        style.grab_rounding = 4;
+        style.tab_rounding = 4;
+        style.cell_padding = [2]f32{ 2.0, 2.0 };
+        style.window_padding = [2]f32{ 8.0, 8.0 };
     }
 
     fn styleSetColor(Style: *zgui.Style, Col: zgui.StyleCol, R: u32, G: u32, B: u32, A: u32) void {
