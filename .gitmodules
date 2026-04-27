@@ -3,3 +3,10 @@
 	url = https://github.com/glfw/glfw.git
 [submodule "imgui"]
 	branch = docking
+[submodule "vendor/modugui"]
+	path = vendor/modugui
+	url = https://github.com/darkresident55/ModuGUI.git
+[submodule "moducpp"]
+	branch = docking
+[submodule "modugui"]
+	branch = docking

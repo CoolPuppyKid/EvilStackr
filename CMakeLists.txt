@@ -11,7 +11,7 @@ add_subdirectory(vendor/glfw)
 
 find_package(OpenGL REQUIRED)
 
-set(IMGUI_DIR ${CMAKE_SOURCE_DIR}/vendor/imgui)
+set(IMGUI_DIR ${CMAKE_SOURCE_DIR}/vendor/modugui)
 
 add_library(imgui STATIC
     ${IMGUI_DIR}/imgui.cpp
@@ -29,8 +29,12 @@ target_include_directories(imgui PUBLIC
 
 target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
 
+file(GLOB_RECURSE SOURCES
+    "src/*.cpp"
+    "src/*.h"
+)
 
-add_executable(${PROJECT_NAME} src/main.cpp)
+add_executable(${PROJECT_NAME} ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${LIBRAW_INCLUDE_DIRS}
