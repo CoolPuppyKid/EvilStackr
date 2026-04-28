@@ -28,19 +28,16 @@ int main() {
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    UI ui = UI();
 
     ModularityTheme modularityTheme = ModularityTheme();
     modularityTheme.Apply();
 
-    UI ui = UI();
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
+
+    ImGuiIO& io = ImGui::GetIO();
     io.Fonts->AddFontFromFileTTF("assets/Fonts/M_PLUS_Rounded_1c/MPlusRounded1c-Bold.ttf", 18.0f);
 
     while (!glfwWindowShouldClose(window)) {
@@ -53,7 +50,10 @@ int main() {
         ui.BuildDefaultDockLayout();
         ui.UpdateDockDrawerAnimations();
 
-        ImGui::Begin("yo");
+        ImGui::Begin("Project Manager");
+        ImGui::End();
+        
+        ImGui::Begin("Viewport");
         ImGui::End();
 
         ImGui::Render();
@@ -78,7 +78,6 @@ int main() {
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;

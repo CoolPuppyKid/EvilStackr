@@ -29,6 +29,20 @@ target_include_directories(imgui PUBLIC
 
 target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
 
+set(LIBRAW_DIR ${CMAKE_SOURCE_DIR}/vendor/libraw)
+
+file(GLOB_RECURSE LIBRAW_SOURCES ${LIBRAW_DIR}/src/*.cpp)
+
+add_library(libraw STATIC ${LIBRAW_SOURCES})
+
+target_include_directories(libraw PUBLIC ${LIBRAW_DIR})
+
+target_compile_definitions(libraw PUBLIC
+    LIBRAW_NODLL
+    LIBRAW_NOTHREADS
+)
+
+
 file(GLOB_RECURSE SOURCES
     "src/*.cpp"
     "src/*.h"
@@ -44,6 +58,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     imgui
     glfw
     OpenGL::GL
+    libraw
 )
 
 

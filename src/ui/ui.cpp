@@ -556,10 +556,14 @@ void UI::UpdateDockDrawerAnimations() {
 }
 
 UI::UI() {
-
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 }
 
 UI::~UI()
 {
-
+    ImGui::DestroyContext();
 }

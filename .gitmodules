@@ -10,3 +10,6 @@
 	branch = docking
 [submodule "modugui"]
 	branch = docking
+[submodule "vendor/libraw"]
+	path = vendor/libraw
+	url = https://github.com/LibRaw/LibRaw.git
