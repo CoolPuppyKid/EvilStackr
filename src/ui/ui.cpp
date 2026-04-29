@@ -27,35 +27,6 @@ ImGuiID UI::SetupDockspace() {
     return g_MainDockspaceId;
 }
 
-void UI::BuildDefaultDockLayout() {
-    static bool initialized = false;
-    if (initialized || g_MainDockspaceId == 0) {
-        return;
-    }
-
-    ImGuiViewport* viewport = ImGui::GetMainViewport();
-    ImGui::DockBuilderRemoveNode(g_MainDockspaceId);
-    ImGui::DockBuilderAddNode(g_MainDockspaceId, ImGuiDockNodeFlags_DockSpace);
-    ImGui::DockBuilderSetNodeSize(g_MainDockspaceId, viewport->WorkSize);
-
-    ImGuiID dockMain = g_MainDockspaceId;
-    ImGuiID dockLeft = ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Left, 0.20f, nullptr, &dockMain);
-    ImGuiID dockRight = ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.28f, nullptr, &dockMain);
-    ImGuiID dockBottom = ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Down, 0.28f, nullptr, &dockMain);
-
-    ImGui::DockBuilderDockWindow("Hierarchy", dockLeft);
-    ImGui::DockBuilderDockWindow("Camera", dockLeft);
-    ImGui::DockBuilderDockWindow("Inspector", dockRight);
-    ImGui::DockBuilderDockWindow("Environment", dockRight);
-    ImGui::DockBuilderDockWindow("Project", dockBottom);
-    ImGui::DockBuilderDockWindow("Console", dockBottom);
-    ImGui::DockBuilderDockWindow("Viewport", dockMain);
-    ImGui::DockBuilderDockWindow("Game", dockMain);
-    ImGui::DockBuilderFinish(g_MainDockspaceId);
-
-    initialized = true;
-}
-
 bool UI::MatchesVisibleWindowTitle(const char* windowName, const char* expectedTitle) {
     if (!windowName || !expectedTitle) {
         return false;
@@ -534,21 +505,9 @@ void UI::UpdateDockDrawerAnimations() {
     static DockDrawerState rightState;
     static DockDrawerState bottomState;
 
-    static const char* kLeftAnchors[] = {"Hierarchy", "Camera"};
-    static const char* kRightAnchors[] = {"Inspector", "Environment"};
     static const char* kBottomAnchors[] = {"Project", "Console"};
 
     UpdateDockDrawerAnimation(leftState,
-                              FindDockDrawerTarget(kLeftAnchors, IM_ARRAYSIZE(kLeftAnchors), DockDrawerSide::Left),
-                              DockDrawerSide::Left,
-                              kLeftAnchors,
-                              IM_ARRAYSIZE(kLeftAnchors));
-    UpdateDockDrawerAnimation(rightState,
-                              FindDockDrawerTarget(kRightAnchors, IM_ARRAYSIZE(kRightAnchors), DockDrawerSide::Right),
-                              DockDrawerSide::Right,
-                              kRightAnchors,
-                              IM_ARRAYSIZE(kRightAnchors));
-    UpdateDockDrawerAnimation(bottomState,
                               FindDockDrawerTarget(kBottomAnchors, IM_ARRAYSIZE(kBottomAnchors), DockDrawerSide::Bottom),
                               DockDrawerSide::Bottom,
                               kBottomAnchors,

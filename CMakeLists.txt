@@ -32,6 +32,7 @@ target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
 set(LIBRAW_DIR ${CMAKE_SOURCE_DIR}/vendor/libraw)
 
 file(GLOB_RECURSE LIBRAW_SOURCES ${LIBRAW_DIR}/src/*.cpp)
+list(FILTER LIBRAW_SOURCES EXCLUDE REGEX ".*_ph\\.cpp$")
 
 add_library(libraw STATIC ${LIBRAW_SOURCES})
 

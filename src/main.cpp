@@ -2,10 +2,13 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_internal.h"
+#include "libraw/libraw.h"
 #include "ui/themes/modularityTheme.h"
 #include "ui/ui.h"
+#include "ui/windows/fileWindow.h"
 
 #include <GLFW/glfw3.h>
+#include <iostream>
 
 int main() {
     if (!glfwInit()) {
@@ -28,11 +31,15 @@ int main() {
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
+    auto version = libraw_version();
+    std::cout << "LibRaw Version: " << version << std::endl;
+
     UI ui = UI();
 
     ModularityTheme modularityTheme = ModularityTheme();
     modularityTheme.Apply();
 
+    FileWindow fileWindow = FileWindow();
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
@@ -47,11 +54,9 @@ int main() {
         ImGui::NewFrame();
 
         ui.SetupDockspace();
-        ui.BuildDefaultDockLayout();
         ui.UpdateDockDrawerAnimations();
 
-        ImGui::Begin("Project Manager");
-        ImGui::End();
+        fileWindow.Draw();
         
         ImGui::Begin("Viewport");
         ImGui::End();
