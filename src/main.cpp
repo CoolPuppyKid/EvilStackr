@@ -6,6 +6,7 @@
 #include "ui/themes/modularityTheme.h"
 #include "ui/ui.h"
 #include "ui/windows/fileWindow.h"
+#include "stb_image.h"
 
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -47,6 +48,20 @@ int main() {
     ImGuiIO& io = ImGui::GetIO();
     io.Fonts->AddFontFromFileTTF("assets/Fonts/M_PLUS_Rounded_1c/MPlusRounded1c-Bold.ttf", 18.0f);
 
+    GLFWimage images[1];
+    int w,h,ch;
+    unsigned char* image = stbi_load("assets/UI/EvilStackr.png", &w, &h, &ch, 0);
+    if (image == nullptr)
+    {
+        std::cout << "Error loading window icons." << std::endl;
+        exit(1);
+    }
+    images[0].width = w;
+    images[0].height = h;
+    images[0].pixels = image;
+
+    glfwSetWindowIcon(window, 1, images);
+
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
         ImGui_ImplOpenGL3_NewFrame();
@@ -85,5 +100,6 @@ int main() {
     ImGui_ImplGlfw_Shutdown();
     glfwDestroyWindow(window);
     glfwTerminate();
+    stbi_image_free(image);
     return 0;
 }
