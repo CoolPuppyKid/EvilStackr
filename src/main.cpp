@@ -50,7 +50,7 @@ int main() {
 
     GLFWimage images[1];
     int w,h,ch;
-    unsigned char* image = stbi_load("assets/UI/EvilStackr.png", &w, &h, &ch, 0);
+    unsigned char* image = stbi_load("assets/UI/EvilStackr Logo_Rounded.png", &w, &h, &ch, 0);
     if (image == nullptr)
     {
         std::cout << "Error loading window icons." << std::endl;
